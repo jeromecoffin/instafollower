@@ -1,34 +1,28 @@
 import csv
-import instaloader
-from instaloader import Hashtag
+import requests
+from bs4 import BeautifulSoup
 
-# Create an instance of Instaloader
-L = instaloader.Instaloader()
-L.load_session_from_file("jerome.devops", "/Users/jeromecoffin/git_repo/instafollower/session-jerome.devops")
+# Open the CSV file and read the hashtags
+with open('/Users/jeromecoffin/git_repo/instafollower/data/sustainablehashtag.csv', 'r') as f:
+    reader = csv.reader(f)
+    hashtags = [row[0] for row in reader]
 
-# Load the CSV file containing the hashtags
-with open('/Users/jeromecoffin/git_repo/instafollower/data/sustainablehashtag.csv', newline='') as csvfile:
-    hashtag_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
-    
-    # Create a list to hold the hashtag data
-    hashtag_data = []
+# Open a new CSV file to write the results
+with open('/Users/jeromecoffin/git_repo/instafollower/data/hashtags_with_counts.csv', 'w', newline='') as f:
+    writer = csv.writer(f)
+    for hashtag in hashtags:
+        url = f"https://www.instagram.com/explore/tags/{hashtag}/"
 
-    # Loop through each hashtag in the CSV file
-    for row in hashtag_reader:
-        hashtag = row[0]
-        print(hashtag)
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text, "html.parser")
+        meta = soup.find("meta", attrs={"name": "description"})
 
-        # Use Instaloader to get the number of posts with this hashtag
-        h = Hashtag.from_name(L.context, hashtag)
-        count = h.mediacount
-
-        # Add the hashtag and the number of posts to the hashtag data list
-        hashtag_data.append([hashtag, count])
-
-# Write the hashtag data back to the CSV file
-with open('/Users/jeromecoffin/git_repo/instafollower/data/sustainablehashtag.csv', mode='w', newline='') as csvfile:
-    hashtag_writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-
-    # Write the hashtag data to the CSV file
-    for row in hashtag_data:
-        hashtag_writer.writerow(row)
+        if meta:
+            description = meta.attrs["content"]
+            parts = description.split(" ")
+            posts = parts[0].replace(",", "")
+            print(f"The hashtag '{hashtag}' has {posts} posts on Instagram.")
+            writer.writerow([hashtag] + [posts])  # write the result to the new column
+        else:
+            print(f"Could not find data for the hashtag '{hashtag}'.")
+            writer.writerow([hashtag] + ['Not Found'])  # write "Not Found" to the new column
