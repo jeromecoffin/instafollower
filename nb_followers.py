@@ -1,29 +1,40 @@
-import instaloader
+import requests
+from bs4 import BeautifulSoup
 import schedule
 import time
 import datetime
 from tinydb import TinyDB
 from tinydb.operations import add
-from tinyflux import TinyFluxDB
+from tinyflux import TinyFlux
 import csv
-
+from tinyflux import Point
 
 def get_num_followers(username):
-    # create an instance of Instaloader class
-    L = instaloader.Instaloader()
+    print(username)
+    # get the profile page HTML
+    url = f"https://www.instagram.com/{username}/"
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "html.parser")
 
-    # get profile instance
-    profile = instaloader.Profile.from_username(L.context, username)
-
-    # get the number of followers of the profile
-    num_followers = profile.followers
+    # get the number of followers from the page HTML
+    followers_text = soup.find("meta", property="og:description")["content"]
+    num_followers = int(followers_text.split()[0].replace(",", ""))
 
     # print the number of followers
     print("Number of followers of", username, "is:", num_followers)
 
     # store the number of followers in the time series database
     current_time = datetime.datetime.now()
-    db.insert({"time": current_time.isoformat(), "username": username, "followers": num_followers})
+
+    from tinyflux import Point
+
+    point = Point(
+        time=current_time,
+        measurement='followers',
+        tags={'username': username},
+        fields={'count': num_followers}
+    )
+    fluxdb.insert(point)
 
 # create an empty list
 usernames = []
@@ -35,15 +46,15 @@ with open('usernames.csv', mode='r') as file:
         usernames.append(row[0])
 
 # create a TinyFluxDB instance
-fluxdb = TinyFluxDB("example_db")
+fluxdb = TinyFlux("example_db")
 
-# get the database instance
-db = TinyDB(fluxdb.db_path)
+for username in usernames:
+    get_num_followers(username)
 
 # run the function for each username every 6 hours
-for username in usernames:
-    schedule.every(6).hours.do(get_num_followers, username)
+#for username in usernames:
+#    schedule.every(6).hours.do(get_num_followers, username)
 
-while True:
-    schedule.run_pending()
-    time.sleep(1)
+#while True:
+#    schedule.run_pending()
+#    time.sleep(1)

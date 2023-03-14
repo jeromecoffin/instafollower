@@ -55,7 +55,7 @@ new_tracked = []
 new_tracked_url=[]
 tag = -1
 
-hashtag_list = ['moderesponsable']
+hashtag_list = ['moderesponsable', 'modedurable']
 for hashtag in hashtag_list:
     tag += 1
     driver.get('https://www.instagram.com/explore/tags/'+ hashtag_list[tag] + '/')
@@ -69,11 +69,15 @@ for hashtag in hashtag_list:
         driver.get(pic_href)
         sleep(5)
         try:
-            username = driver.find_element(By.XPATH, '//*[@id="mount_0_0_HM"]/div/div/div[2]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/article/div/div[2]/div/div/div[2]/div[1]/ul/div/li/div/div/div[2]/h2/div/div/div/a')
-            new_tracked.append(username.text) 
-            new_tracked_url.append('https://www.instagram.com/'+username.text+'/')
+            username = driver.find_element(By.XPATH, '//a[@class="x1i10hfl xjbqb8w x6umtig x1b1mbwd xaqea5y xav7gou x9f619 x1ypdohk xt0psk2 xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x16tdsg8 x1hl2dhg xggy1nq x1a2a7pz _acan _acao _acat _acaw _aj1- _a6hd"]').text
+            new_tracked.append(username) 
+            new_tracked_url.append('https://www.instagram.com/'+username+'/')
         except:
-            username = driver.find_element(By.XPATH, '//*[@id="mount_0_0_HM"]/div/div/div[2]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/article/div/div[2]/div/div/div[2]/div[1]/ul/div/li/div/div/div[2]/h2/div/div/div/a')
-            new_tracked.append(username.text)
-            new_tracked_url.append('https://www.instagram.com/'+username.text+'/')
+            username = driver.find_element(By.XPATH, '//a[@class="x1i10hfl xjbqb8w x6umtig x1b1mbwd xaqea5y xav7gou x9f619 x1ypdohk xt0psk2 xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x16tdsg8 x1hl2dhg xggy1nq x1a2a7pz _acan _acao _acat _acaw _aj1- _a6hd"]').text
+            new_tracked.append(username)
+            new_tracked_url.append('https://www.instagram.com/'+username+'/')
         sleep(randint(5,15))
+
+    dic={'username':new_tracked,'user_url':new_tracked_url}
+    updated_user_df = pd.DataFrame(dic)
+    updated_user_df.to_csv(hashtag+'_{}_users_list.csv'.format(strftime("%Y%m%d")))
